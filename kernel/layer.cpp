@@ -165,7 +165,7 @@ int LayerManager::GetHeight(unsigned int id) {
 }
 
 unsigned int LayerManager::GetLatestID() {
-  return layer_stack_[layer_stack_.size() - 1]->ID();
+  return layers_[layers_.size() - 1]->ID();
 }
 
 namespace {
