@@ -2,6 +2,7 @@
 #include "task.hpp"
 #include <memory>
 #include "usb/classdriver/keyboard.hpp"
+#include "layer.hpp"
 
 namespace {
   const char keycode_map[256] = {

@@ -40,16 +40,33 @@ class LayerManager {
 
     void UpDown(unsigned int id, int new_height);
     void Hide(unsigned int id);
+
+    Layer* FindLayer(unsigned int id);
+    int GetHeight(unsigned int id);
+    unsigned int GetLatestID();
   private:
     FrameBuffer* screen_{nullptr};
     mutable FrameBuffer back_buffer_{};
     std::vector<std::unique_ptr<Layer>> layers_{};
     std::vector<Layer*> layer_stack_{};
     unsigned int latest_id_{0};
-
-    Layer* FindLayer(unsigned int id);
 };
 
 extern LayerManager* layer_manager;
 void InitializeLayer();
 void ProcessLayerMessage(const Message& msg);
+
+class ActiveLayer {
+  public:
+    ActiveLayer(LayerManager& manager);
+    void SetMouseLayer(unsigned int mouse_layer);
+    void Activate(unsigned int layer_id);
+    void ActivateNextIDLayer();
+    unsigned int GetActive() const { return active_layer_; }
+  private:
+    LayerManager& manager_;
+    unsigned int active_layer_{0};
+    unsigned int mouse_layer_{0};
+};
+
+extern ActiveLayer* active_layer;
