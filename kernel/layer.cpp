@@ -155,11 +155,25 @@ void LayerManager::UpDown(unsigned int id, int new_height) {
 
 }
 
+int LayerManager::GetHeight(unsigned int id) {
+  for(int h = 0; h < layer_stack_.size(); h++) {
+    if(layer_stack_[h]->ID() == id) {
+      return h;
+    }
+  }
+  return -1;
+}
+
+unsigned int LayerManager::GetLatestID() {
+  return layer_stack_[layer_stack_.size() - 1]->ID();
+}
+
 namespace {
   FrameBuffer* screen;
 }
 
 LayerManager* layer_manager;
+ActiveLayer* active_layer;
 
 void InitializeLayer() {
   const auto screen_size = ScreenSize();
@@ -178,6 +192,7 @@ void InitializeLayer() {
   if(auto err = screen->Initialize(screen_config)) {
     Log(kError, "failed to initialize frame buffer: %s at %s:%d\n",
         err.Name(), err.File(), err.Line());
+    exit(1);
   }
 
   layer_manager = new LayerManager;
@@ -194,6 +209,8 @@ void InitializeLayer() {
   
   layer_manager->UpDown(bglayer_id, 0);
   layer_manager->UpDown(console->LayerID(), 1);
+
+  active_layer = new ActiveLayer{*layer_manager};
 }
 
 Layer* LayerManager::FindLayerByPosition(Vector2D<int> pos, unsigned int exclude_id) const {
@@ -232,4 +249,48 @@ void ProcessLayerMessage(const Message& msg) {
       layer_manager->Draw(arg.layer_id);
       break;
   }
+}
+
+ActiveLayer::ActiveLayer(LayerManager& manager) : manager_{manager} {
+
+}
+
+void ActiveLayer::SetMouseLayer(unsigned int mouse_layer) {
+  mouse_layer_ = mouse_layer;
+}
+
+void ActiveLayer::Activate(unsigned int layer_id) {
+  if(active_layer_ == layer_id){
+    return;
+  }
+
+  if(active_layer_ > 0) {
+    Layer* layer = manager_.FindLayer(active_layer_);
+    layer->GetWindow()->Deactivate();
+    manager_.Draw(active_layer_);
+  }
+
+  active_layer_ = layer_id;
+  if(active_layer_ > 0) {
+    Layer* layer = manager_.FindLayer(active_layer_);
+    layer->GetWindow()->Activate();
+    manager_.UpDown(active_layer_, manager_.GetHeight(mouse_layer_) - 1);
+    manager_.Draw(active_layer_);
+  }
+}
+
+void ActiveLayer::ActivateNextIDLayer() {
+  unsigned int next_active_layer_id = 0;
+  Layer* layer;
+
+  for(int h = 1; h < manager_.GetLatestID(); h++) {
+    next_active_layer_id = (active_layer_ + h) % (manager_.GetLatestID() + 1);
+
+    if(next_active_layer_id == 0) continue;
+
+    layer = manager_.FindLayer(next_active_layer_id);
+    if(layer->IsDraggable()) break;
+  }
+
+  active_layer->Activate(next_active_layer_id);
 }
