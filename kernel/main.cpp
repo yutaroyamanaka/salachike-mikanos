@@ -291,7 +291,17 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig& frame_buffer_config_
               printk("wakeup TaskB: %s\n", task_manager->Wakeup(taskb_id).Name());
             }
           } else {
-            printk("Key push not handled : keycode %02x, ascii %02x\n", msg->arg.keyboard.keycode, msg->arg.keyboard.ascii);
+            __asm__("cli");
+            auto task_it = layer_task_map->find(act);
+            __asm__("sti");
+            if(task_it != layer_task_map->end()) {
+              __asm__("cli");
+              task_manager->SendMessage(task_it->second, *msg);
+              __asm__("sti");
+            } else {
+              printk("Key push not handled : keycode %02x, ascii %02x\n", msg->arg.keyboard.keycode, msg->arg.keyboard.ascii);
+            }
+
           }
         }
         break;
