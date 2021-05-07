@@ -2,6 +2,7 @@
 #include "window.hpp"
 #include "frame_buffer.hpp"
 #include "message.hpp"
+#include <map>
 
 class Layer {
   public:
@@ -71,6 +72,7 @@ class ActiveLayer {
 };
 
 extern ActiveLayer* active_layer;
+extern std::map<unsigned int, uint64_t>* layer_task_map;
 
 constexpr Message MakeLayerMessage(
     uint64_t task_id, unsigned int layer_id, LayerOperation op, const Rectangle<int>& area
