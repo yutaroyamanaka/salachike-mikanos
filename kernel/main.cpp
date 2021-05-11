@@ -30,6 +30,7 @@
 #include "keyboard.hpp"
 #include "task.hpp"
 #include "terminal.hpp"
+#include "fat.hpp"
 
 int printk(const char* format, ...) {
   va_list ap;
@@ -147,6 +148,7 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig& frame_buffer_config_
   InitializeMemoryManager(memory_map);
   InitializeInterrupt();
 
+  fat::Initialize(volume_image);
   InitializePCI();
 
   InitializeLayer();
