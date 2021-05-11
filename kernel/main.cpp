@@ -109,59 +109,6 @@ void InitializeMainWindow() {
   layer_manager->UpDown(main_window_layer_id, std::numeric_limits<int>::max());
 }
 
-std::shared_ptr<ToplevelWindow> task_b_window;
-unsigned int task_b_window_layer_id;
-void InitializeTaskBWindow() {
-  task_b_window = std::make_shared<ToplevelWindow>(
-      160, 52, screen_config.pixel_format, "Task B Window"
-      );
-  task_b_window_layer_id = layer_manager->NewLayer()
-    .SetWindow(task_b_window)
-    .SetDraggable(true)
-    .Move({100, 100})
-    .ID();
-
-  layer_manager->UpDown(task_b_window_layer_id, std::numeric_limits<int>::max());
-}
-
-void TaskB(uint64_t task_id, int64_t data) {
-  printk("TaskB: task_id=%d, data=%d\n", task_id, data);
-  char str[128];
-  int count = 0;
-
-  __asm__("cli");
-  Task& task = task_manager->CurrentTask();
-  __asm__("sti");
-
-  while(true) {
-    count++;
-    sprintf(str, "%010d", count);
-    FillRectangle(*task_b_window->InnerWriter(), {20, 4}, {8 * 10, 16}, {0xc6, 0xc6, 0xc6});
-    WriteString(*task_b_window->InnerWriter(), {20, 4}, str, {0, 0, 0});
-
-    Message msg{Message::kLayer, task_id};
-    msg.arg.layer.layer_id = task_b_window_layer_id;
-    msg.arg.layer.op = LayerOperation::Draw;
-    __asm__("cli");
-    task_manager->SendMessage(1, msg);
-    __asm__("sti");
-
-    while(true) {
-      __asm__("cli");
-      auto msg = task.ReceiveMessage();
-      if(!msg) {
-        task.Sleep();
-        __asm__("sti");
-        continue;
-      }
-
-      if(msg->type == Message::kLayerFinish) {
-        break;
-      }
-    }
-  }
-}
-
 void SwitchEhci2Xhci(const pci::Device& xhc_dev) {
   bool intel_ehc_exist = false;
   for(int i = 0; i < pci::num_device; i++) {
@@ -185,7 +132,7 @@ usb::xhci::Controller* xhc;
 alignas(16) uint8_t kernel_main_stack[1024 * 1024];
 
 extern "C" void KernelMainNewStack(const FrameBufferConfig& frame_buffer_config_ref, const MemoryMap& memory_map_ref, 
-    const acpi::RSDP& acpi_table) {
+    const acpi::RSDP& acpi_table, void* volume_image) {
 
   MemoryMap memory_map{memory_map_ref};
 
@@ -205,7 +152,6 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig& frame_buffer_config_
   InitializeLayer();
   InitializeMainWindow();
   InitializeTextWindow();
-  InitializeTaskBWindow();
   layer_manager->Draw({{0, 0}, ScreenSize()});
 
   acpi::Initialize(acpi_table);
@@ -220,11 +166,6 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig& frame_buffer_config_
 
   InitializeTask();
   Task& main_task = task_manager->CurrentTask();
-  const uint64_t taskb_id = task_manager->NewTask()
-    .InitContext(TaskB, 45)
-    .Wakeup()
-    .ID();
-
   const uint64_t task_terminal_id = task_manager->NewTask()
     .InitContext(TaskTerminal, 0)
     .Wakeup()
@@ -234,8 +175,21 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig& frame_buffer_config_
   InitializeKeyboard();
   InitializeMouse();
 
-  printk("layer size: %d\n", layer_manager->GetLatestID());
-
+  uint8_t* p = reinterpret_cast<uint8_t*>(volume_image);
+  printk("Volume Image:\n");
+  for(int i = 0; i < 16; i++) {
+    printk("%04x:", i * 16);
+    for(int j = 0; j < 8; j++) {
+      printk(" %02x", *p);
+      p++;
+    }
+    printk(" ");
+    for(int j = 0; j < 8; j++) {
+      printk(" %02x", *p);;
+      p++;
+    }
+    printk("\n");
+  }
   char str[128];
 
   while (true) {
@@ -284,12 +238,6 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig& frame_buffer_config_
         } else {
           if(auto act = active_layer->GetActive(); act == text_window_layer_id) {
             InputTextWindow(msg->arg.keyboard.ascii);
-          } else if(act == task_b_window_layer_id) {
-            if(msg->arg.keyboard.ascii == 's') {
-              printk("sleep TaskB: %s\n", task_manager->Sleep(taskb_id).Name());
-            } else if(msg->arg.keyboard.ascii == 'w') {
-              printk("wakeup TaskB: %s\n", task_manager->Wakeup(taskb_id).Name());
-            }
           } else {
             __asm__("cli");
             auto task_it = layer_task_map->find(act);
@@ -301,7 +249,6 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig& frame_buffer_config_
             } else {
               printk("Key push not handled : keycode %02x, ascii %02x\n", msg->arg.keyboard.keycode, msg->arg.keyboard.ascii);
             }
-
           }
         }
         break;
