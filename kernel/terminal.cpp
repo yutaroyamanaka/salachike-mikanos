@@ -1,9 +1,42 @@
 #include "terminal.hpp"
 #include "font.hpp"
 #include "layer.hpp"
-#include "logger.hpp"
 #include "pci.hpp"
-#include "fat.hpp"
+#include <cstring>
+#include "asmfunc.h"
+#include "elf.hpp"
+#include "logger.hpp"
+
+namespace {
+  std::vector<char*> MakeArgVector(char* command, char* first_arg) {
+    std::vector<char*> argv;
+    argv.push_back(command);
+
+    char* p = first_arg;
+    while(true) {
+      while(isspace(p[0])) {
+        p++;
+      }
+      if(p[0] == 0) {
+        break;
+      }
+
+      argv.push_back(p);
+
+      while(p[0] != 0 && !isspace(p[0])) {
+        p++;
+      }
+
+      if(p[0] == 0) {
+        break;
+      }
+
+      p[0] = 0;
+      p++;
+    }
+    return argv;
+  }
+}
  
 Terminal::Terminal() {
   window_ = std::make_shared<ToplevelWindow>(
@@ -48,7 +81,7 @@ Rectangle<int> Terminal::InputKey(uint8_t modifier, uint8_t keycode, char ascii)
     linebuf_index_ = 0;
     cmd_history_index_ = -1;
     cursor_.x = 0;
-    Log(kWarn, "line: %s\n", &linebuf_[0]);
+
     if(cursor_.y < kRows - 1){
       cursor_.y++;
     } else {
@@ -219,7 +252,7 @@ void Terminal::ExecuteLine() {
       Print(command);
       Print("\n");
     } else {
-      ExecuteFile(*file_entry);
+      ExecuteFile(*file_entry, command, first_arg);
     }
   }
 }
@@ -251,7 +284,7 @@ Rectangle<int> Terminal::HistoryUpDown(int direction) {
   return draw_area;
 }
 
-void Terminal::ExecuteFile(const fat::DirectoryEntry& file_entry) {
+void Terminal::ExecuteFile(const fat::DirectoryEntry& file_entry, char* command, char* first_arg) {
   auto cluster = file_entry.FirstCluster();
   auto remain_bytes = file_entry.file_size;
 
@@ -265,12 +298,31 @@ void Terminal::ExecuteFile(const fat::DirectoryEntry& file_entry) {
 
     remain_bytes -= copy_bytes;
     p += copy_bytes;
-    cluster += fat::NextCluster(cluster);
+    cluster = fat::NextCluster(cluster);
   }
 
-  using Func = void ();
-  auto f = reinterpret_cast<Func*>(&file_buf[0]);
-  f();
+  auto elf_header = reinterpret_cast<Elf64_Ehdr*>(&file_buf[0]);
+  if(memcmp(elf_header->e_ident, "\x7f" "ELF", 4) != 0) {
+    using Func = void();
+    auto f = reinterpret_cast<Func*>(&file_buf[0]);
+    f();
+    return;
+  }
+
+  auto argv = MakeArgVector(command, first_arg);
+
+  Log(kWarn, "command: %s\n", argv[0]);
+
+  auto entry_addr = elf_header->e_entry;
+  entry_addr += reinterpret_cast<uintptr_t>(&file_buf[0]);
+
+  using Func = int (int, char**);
+  auto f = reinterpret_cast<Func*>(entry_addr);
+  auto ret = f(argv.size(), &argv[0]);
+
+  char s[64];
+  sprintf(s, "app exited. ret = %d\n", ret);
+  Print(s);
 }
 
 void TaskTerminal(uint64_t task_id, int64_t data) {
