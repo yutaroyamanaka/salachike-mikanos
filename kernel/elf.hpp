@@ -13,7 +13,7 @@ typedef int64_t   Elf64_Sxword;
 #define EI_NIDENT 16
 
 typedef struct {
-  unsigned char e_indent[EI_NIDENT];
+  unsigned char e_ident[EI_NIDENT];
   Elf64_Half e_type;
   Elf64_Half e_machine;
   Elf64_Word e_version;
