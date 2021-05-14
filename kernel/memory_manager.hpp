@@ -5,9 +5,7 @@
 #include "memory_map.hpp"
 
 namespace {
-  constexpr unsigned long long operator""_KiB(unsigned long long kib) {
-    return kib * 1024;
-  }
+  constexpr unsigned long long operator""_KiB(unsigned long long kib) { return kib * 1024; }
 
   constexpr unsigned long long operator""_MiB(unsigned long long mib) {
     return mib * 1024_KiB;
@@ -56,4 +54,5 @@ class BitmapMemoryManager {
     void SetBit(FrameID frame, bool allocated);
 };
 
+extern BitmapMemoryManager* memory_manager;
 void InitializeMemoryManager(const MemoryMap& memory_map);
