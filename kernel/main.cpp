@@ -146,6 +146,7 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig& frame_buffer_config_
   InitializeSegmentation();
   InitializePaging();
   InitializeMemoryManager(memory_map);
+  InitializeTSS();
   InitializeInterrupt();
 
   fat::Initialize(volume_image);

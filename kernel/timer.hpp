@@ -9,7 +9,6 @@ void InitializeLAPICTimer();
 void StartLAPICTimer();
 uint32_t LAPICTimerElapsed();
 void StopLAPICTimer();
-void LAPICTimerOnInterrupt();
 
 class Timer {
   public:

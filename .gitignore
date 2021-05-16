@@ -4,3 +4,4 @@ tmp/**
 **/*.elf
 **/*.bin
 *.img
+./run.sh
