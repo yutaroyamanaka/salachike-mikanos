@@ -245,3 +245,32 @@ IntHandlerLAPICTimer:
   mov rsp, rbp
   pop rbp
   iretq
+
+global WriteMSR
+WriteMSR: ; void WriteMSR(uint32_t msr, uint64_t value) RDI, RSI;
+  mov rdx, rsi
+  shr rdx, 32
+  mov eax, esi
+  mov ecx, edi
+  wrmsr
+  ret
+
+extern syscall_table
+global SyscallEntry
+SyscallEntry: ; void SyscallEntry(void);
+  push rbp
+  push rcx ; ORIGINAL RIP
+  push r11 ; ORIGINAL RFLAGS
+
+  mov rcx, r10 ; rcx restore
+  and eax, 0x7fffffff ; 0-index 
+  mov rbp, rsp
+  and rsp, 0xfffffffffffffff0 ; SP should be a multiple of 16.
+
+  call [syscall_table + 8 * eax]
+  mov rsp, rbp
+
+  pop r11
+  pop rcx
+  pop rbp
+  o64 sysret

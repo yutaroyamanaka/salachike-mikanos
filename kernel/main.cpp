@@ -31,6 +31,7 @@
 #include "task.hpp"
 #include "terminal.hpp"
 #include "fat.hpp"
+#include "syscall.hpp"
 
 int printk(const char* format, ...) {
   va_list ap;
@@ -167,6 +168,7 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig& frame_buffer_config_
   __asm__("sti");
   bool textbox_cursor_visible = false;
 
+  InitializeSyscall();
   InitializeTask();
   Task& main_task = task_manager->CurrentTask();
   const uint64_t task_terminal_id = task_manager->NewTask()
