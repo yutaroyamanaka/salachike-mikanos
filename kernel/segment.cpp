@@ -74,6 +74,9 @@ void InitializeTSS(){
   tss[1] = rsp0 & 0xffffffff;
   tss[2] = rsp0 >> 32;
 
+  /* When the interruption in the user mode happens, CPU will refer the GDT entry specified by the TR Register and get the TSS
+   * So, GDT entry specifies TSS header address and TSS RSP0 specifies the stack end address.
+   * */
   uint64_t tss_addr = reinterpret_cast<uint64_t>(&tss[0]);
   SetSystemSegment(gdt[kTSS >> 3], DescriptorType::kTSSAvailable, 0,
       tss_addr & 0xffffffff, sizeof(tss)-1); /* GDT[5] */
