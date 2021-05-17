@@ -1,7 +1,7 @@
 #include <cstring>
 #include <cstdlib>
-
-//auto& printk = *reinterpret_cast<int (*) (const char*, ...)>(0x000000000010b000);
+#include <cstdint>
+#include "../../kernel/logger.hpp"
 
 int stack_ptr;
 long stack[100];
@@ -17,6 +17,8 @@ void Push(long value) {
   stack[stack_ptr] = value;
 }
 
+extern "C" int64_t SyscallLogString(LogLevel, const char*);
+
 extern "C" int main(int argc, char** argv) {
   stack_ptr = -1;
   
@@ -25,14 +27,17 @@ extern "C" int main(int argc, char** argv) {
       long b = Pop();
       long a = Pop();
       Push(a + b);
+      SyscallLogString(kWarn, "+");
     } else if(strcmp(argv[i], "-") == 0) {
       long b = Pop();
       long a = Pop();
       Push(a - b);
+      SyscallLogString(kWarn, "-");
     } else if(strcmp(argv[i], "*") == 0) {
       long b = Pop();
       long a = Pop();
       Push(a * b);
+      SyscallLogString(kWarn, "*");
     } else if(strcmp(argv[i], "/") == 0) {
       long b = Pop();
       long a = Pop();
@@ -41,6 +46,7 @@ extern "C" int main(int argc, char** argv) {
       } else {
         Push(b / a);
       }
+      SyscallLogString(kWarn, "/");
     } else {
       long a = atol(argv[i]);
       Push(a); 
@@ -48,6 +54,7 @@ extern "C" int main(int argc, char** argv) {
   }
 
   if(stack_ptr < 0) return 0;
+  SyscallLogString(kWarn, "\nHello, this is rpn\n");
   while(1);
   //return static_cast<int>(Pop());
 }
