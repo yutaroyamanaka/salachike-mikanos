@@ -1,6 +1,8 @@
 #include <cstring>
 #include <cstdlib>
 
+//auto& printk = *reinterpret_cast<int (*) (const char*, ...)>(0x000000000010b000);
+
 int stack_ptr;
 long stack[100];
 
