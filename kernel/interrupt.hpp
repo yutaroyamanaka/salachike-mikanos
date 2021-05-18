@@ -64,3 +64,5 @@ struct InterruptFrame {
 void NotifyEndOfInterrupt();
 
 void InitializeInterrupt();
+
+const int kISForTimer = 1; // index of the interrupt stack table

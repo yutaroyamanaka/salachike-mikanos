@@ -63,16 +63,23 @@ void InitializeSegmentation() {
   SetCSSS(kKernelCS, kKernelSS);
 }
 
-void InitializeTSS(){
-  const int kRSP0Frames = 8;
-  auto [stack0, err] = memory_manager->Allocate(kRSP0Frames); /* 32KiB */
-  if(err) {
-    Log(kError, "failed to allocate rsp0: %s\n", err.Name());
-  }
+void SetTSS(int index, uint64_t value) {
+  tss[index] = value & 0xffffffff;
+  tss[index + 1] = value >> 32;
+}
 
-  uint64_t rsp0 = reinterpret_cast<uint64_t>(stack0.Frame()) + kRSP0Frames * 4096;
-  tss[1] = rsp0 & 0xffffffff;
-  tss[2] = rsp0 >> 32;
+uint64_t AllocateStackArea(int num_4kframes) {
+  auto [ stk, err ] = memory_manager->Allocate(num_4kframes);
+  if(err) {
+    Log(kError, "failed to allocate stack area %s\n", err.Name());
+    exit(1);
+  }
+  return reinterpret_cast<uint64_t>(stk.Frame()) + num_4kframes * 4096;
+}
+
+void InitializeTSS(){
+  SetTSS(1, AllocateStackArea(8));
+  SetTSS(7 + 2 * kISForTimer, AllocateStackArea(8));
 
   /* When the interruption in the user mode happens, CPU will refer the GDT entry specified by the TR Register and get the TSS
    * So, GDT entry specifies TSS header address and TSS RSP0 specifies the stack end address.
