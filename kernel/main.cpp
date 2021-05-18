@@ -171,6 +171,7 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig& frame_buffer_config_
   InitializeSyscall();
   InitializeTask();
   Task& main_task = task_manager->CurrentTask();
+  terminals = new std::map<uint64_t, Terminal*>;
   const uint64_t task_terminal_id = task_manager->NewTask()
     .InitContext(TaskTerminal, 0)
     .Wakeup()
