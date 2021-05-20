@@ -2,7 +2,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <stdint.h>
-
 #include "syscall.h"
 
 int close(int fd) {
