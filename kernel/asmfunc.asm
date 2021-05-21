@@ -262,6 +262,7 @@ WriteMSR: ; void WriteMSR(uint32_t msr, uint64_t value) RDI, RSI;
   wrmsr
   ret
 
+extern GetCurrentTaskOSStackPointer
 extern syscall_table
 global SyscallEntry
 SyscallEntry: ; void SyscallEntry(void);
@@ -274,7 +275,22 @@ SyscallEntry: ; void SyscallEntry(void);
   mov rcx, r10 ; rcx restore
   and eax, 0x7fffffff ; 0-index 
   mov rbp, rsp
+
   and rsp, 0xfffffffffffffff0 ; SP should be a multiple of 16.
+  push rax
+  push rdx ; rax and rdx shoule be stored here because these two register are stored for return values.
+  cli
+  call GetCurrentTaskOSStackPointer
+  sti
+  mov rdx, [rsp + 0] ; RDX
+  mov [rax - 16], rdx
+  mov rdx, [rsp + 8] ; RAX
+  mov [rax - 8], rdx
+
+  lea rsp, [rax - 16]
+  pop rdx
+  pop rax
+  and rsp, 0xfffffffffffffff0
 
   call [syscall_table + 8 * eax]
   mov rsp, rbp
