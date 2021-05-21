@@ -9,8 +9,8 @@ OBJS += ../syscall.o ../newlib_support.o
 .PHONY: all
 all: $(TARGET)
 
-$(TARGET): $(OBJS) $(TARGET).o Makefile
-	ld.lld $(LDFLAGS) -o $@ $(OBJS) -lc -lc++ -lc++abi
+$(TARGET): $(OBJS) Makefile
+	ld.lld $(LDFLAGS) -o $@ $(OBJS) -lc -lc++ -lc++abi -lm
 
 %.o: %.cpp Makefile
 	clang++ $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
