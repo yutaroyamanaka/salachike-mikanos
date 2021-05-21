@@ -44,6 +44,7 @@ class LayerManager {
     void Hide(unsigned int id);
 
     Layer* FindLayer(unsigned int id);
+    void RemoveLayer(unsigned int id);
     int GetHeight(unsigned int id);
     unsigned int GetLatestID();
   private:
