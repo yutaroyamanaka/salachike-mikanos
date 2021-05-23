@@ -67,9 +67,7 @@ namespace syscall {
         );
     __asm__("cli");
     const auto layer_id = layer_manager->NewLayer()
-      .SetWindow(win)
-      .SetDraggable(true)
-      .Move({x, y})
+      .SetWindow(win) .SetDraggable(true) .Move({x, y})
       .ID();
     active_layer->Activate(layer_id);
 
@@ -255,6 +253,14 @@ namespace syscall {
           app_events[i].arg.mouse_button.button = msg->arg.mouse_button.button;
           i++;
           break;
+        case Message::kTimerTimeout:
+          if(msg->arg.timer.value < 0) {
+            app_events[i].type = AppEvent::kTimerTimeout;
+            app_events[i].arg.timer.timeout = msg->arg.timer.timeout;
+            app_events[i].arg.timer.value = msg->arg.timer.value;
+            i++;
+          }
+          break;
         default:
           Log(kInfo, "uncaught event type: %u\n", msg->type);
       }
@@ -262,12 +268,35 @@ namespace syscall {
 
     return {i , 0};
   }
+
+  SYSCALL(CreateTimer) {
+    const unsigned int mode = arg1;
+    const int time_value = arg2;
+
+    if(time_value <= 0) {
+      return {0, EINVAL};
+    }
+
+    __asm__("cli");
+    const uint64_t task_id = task_manager->CurrentTask().ID();
+    __asm__("sti");
+
+    unsigned long timeout = arg3 * kTimerFreq / 1000;
+    if(mode & 1) {
+      timeout += time_manager->CurrentTick();
+    }
+
+    __asm__("cli");
+    time_manager->AddTimer(Timer{timeout, -time_value, task_id});
+    __asm__("sti");
+    return { timeout * 1000 / kTimerFreq, 0 };
+  }
 #undef SYSCALL
 }
 
 
 using SyscallFuncType = syscall::Result (uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
-extern "C" std::array<SyscallFuncType*, 11> syscall_table {
+extern "C" std::array<SyscallFuncType*, 12> syscall_table {
     /* 0x00 */ syscall::LogString,
     /* 0x01 */ syscall::PutString,
     /* 0x02 */ syscall::Exit,
@@ -278,7 +307,8 @@ extern "C" std::array<SyscallFuncType*, 11> syscall_table {
     /* 0x07 */ syscall::WinRedraw,
     /* 0x08 */ syscall::WinDrawLine,
     /* 0x09 */ syscall::CloseWindow,
-    /* 0x10 */ syscall::ReadEvent,
+    /* 0x0a */ syscall::ReadEvent,
+    /* 0x0b */ syscall::CreateTimer,
 };
 
 void InitializeSyscall() {

@@ -17,6 +17,9 @@ struct SyscallResult {
 };
 
 #define LAYER_NO_REDRAW (0x00000001ull << 32)
+#define TIMER_ONESHOT_REL 1
+#define TIMER_ONESHOT_ABS 0
+
 struct SyscallResult SyscallLogString(enum LogLevel level, const char* message);
 struct SyscallResult SyscallPutString(int fd, const char* s, size_t len);
 void SyscallExit(int exit_code);
@@ -28,6 +31,7 @@ struct SyscallResult SyscallWinRedraw(uint64_t layer_id_flags);
 struct SyscallResult SyscallWinDrawLine(uint64_t layer_id_flags, int x0, int y0, int x1, int y1, uint32_t color);
 struct SyscallResult SyscallCloseWindow(uint64_t layer_id_flags);
 struct SyscallResult SyscallReadEvent(struct AppEvent* events, size_t len);
+struct SyscallResult SyscallCreateTimer(unsigned int type, int timer_value, unsigned long timeout_ms);
 #ifdef __cplusplus
 }
 #endif
