@@ -11,6 +11,7 @@ struct AppEvent {
   enum Type {
     kQuit,
     kMouseMove,
+    kMouseButton,
   } type;
 
   union {
@@ -19,6 +20,12 @@ struct AppEvent {
       int dx, dy;
       uint8_t buttons;
     } mouse_move;
+
+    struct {
+      int x, y;
+      int press;
+      int button;
+    } mouse_button;
   } arg;
 };
 
