@@ -589,18 +589,20 @@ void TaskTerminal(uint64_t task_id, int64_t data) {
         break;
       case Message::kKeyPush:
         {
-          const auto area = terminal->InputKey(
-              msg->arg.keyboard.modifier,
-              msg->arg.keyboard.keycode,
-              msg->arg.keyboard.ascii
-              );
-          Message msg = MakeLayerMessage(
-              task_id, terminal->LayerID(), LayerOperation::DrawArea, area
-              );
+          if(msg->arg.keyboard.press) {
+            const auto area = terminal->InputKey(
+                msg->arg.keyboard.modifier,
+                msg->arg.keyboard.keycode,
+                msg->arg.keyboard.ascii
+                );
+            Message msg = MakeLayerMessage(
+                task_id, terminal->LayerID(), LayerOperation::DrawArea, area
+                );
 
-          __asm__("cli");
-          task_manager->SendMessage(1, msg);
-          __asm__("sti");
+            __asm__("cli");
+            task_manager->SendMessage(1, msg);
+            __asm__("sti");
+          }
         }
       default:
         break;
