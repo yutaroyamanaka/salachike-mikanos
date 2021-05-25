@@ -223,7 +223,9 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig& frame_buffer_config_
         break;
       case Message::kKeyPush:
         if(msg->arg.keyboard.ascii == '\t') {
-          active_layer->ActivateNextIDLayer();
+          if(msg->arg.keyboard.press) {
+            active_layer->ActivateNextIDLayer();
+          }
         } else {
           if(auto act = active_layer->GetActive(); act == text_window_layer_id) {
             if(msg->arg.keyboard.press) {
