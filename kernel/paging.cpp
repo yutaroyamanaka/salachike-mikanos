@@ -28,3 +28,7 @@ void SetupIdentityPageTable() {
 void InitializePaging() {
   SetupIdentityPageTable();
 }
+
+void ResetCR3() {
+  SetCR3(reinterpret_cast<uint64_t>(&pml4_table[0]));
+}
