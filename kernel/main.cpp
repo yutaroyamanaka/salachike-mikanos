@@ -222,24 +222,27 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig& frame_buffer_config_
         }
         break;
       case Message::kKeyPush:
-        if(msg->arg.keyboard.ascii == '\t') {
+        if(msg->arg.keyboard.ascii == '\t' && msg->arg.keyboard.press) {
           active_layer->ActivateNextIDLayer();
+          break;
+        }
+
+        if(auto act = active_layer->GetActive(); act == text_window_layer_id) {
+          if(msg->arg.keyboard.press) {
+            InputTextWindow(msg->arg.keyboard.ascii);
+          }
+        } else if(msg->arg.keyboard.press && msg->arg.keyboard.keycode == 59 /* 59 */) {
+          task_manager->NewTask().InitContext(TaskTerminal, 0).Wakeup();
         } else {
-          if(auto act = active_layer->GetActive(); act == text_window_layer_id) {
-            if(msg->arg.keyboard.press) {
-              InputTextWindow(msg->arg.keyboard.ascii);
-            }
-          } else {
+          __asm__("cli");
+          auto task_it = layer_task_map->find(act);
+          __asm__("sti");
+          if(task_it != layer_task_map->end()) {
             __asm__("cli");
-            auto task_it = layer_task_map->find(act);
+            task_manager->SendMessage(task_it->second, *msg);
             __asm__("sti");
-            if(task_it != layer_task_map->end()) {
-              __asm__("cli");
-              task_manager->SendMessage(task_it->second, *msg);
-              __asm__("sti");
-            } else {
-              printk("Key push not handled : keycode %02x, ascii %02x\n", msg->arg.keyboard.keycode, msg->arg.keyboard.ascii);
-            }
+          } else {
+            printk("Key push not handled : keycode %02x, ascii %02x\n", msg->arg.keyboard.keycode, msg->arg.keyboard.ascii);
           }
         }
         break;
