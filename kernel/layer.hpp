@@ -53,7 +53,6 @@ class LayerManager {
     std::vector<std::unique_ptr<Layer>> layers_{};
     std::vector<Layer*> layer_stack_{};
     unsigned int latest_id_{0};
-    friend class ActiveLayer;
 };
 
 extern LayerManager* layer_manager;

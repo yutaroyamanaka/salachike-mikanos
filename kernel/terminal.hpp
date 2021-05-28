@@ -12,7 +12,7 @@ class Terminal {
     static const int kRows = 15, kColumns = 60;
     static const int kLineMax = 128;
 
-    Terminal(uint64_t task_id);
+    Terminal(uint64_t task_id, bool show_window);
     unsigned int LayerID() { return layer_id_; }
     Rectangle<int> BlinkCursor();
     Rectangle<int> InputKey(uint8_t modifier, uint8_t keycode, char ascii);
@@ -22,6 +22,7 @@ class Terminal {
     std::shared_ptr<ToplevelWindow> window_;
     unsigned int layer_id_;
     uint64_t task_id_;
+    bool show_window_;
 
     Vector2D<int> cursor_{0, 0};
     bool cursor_visible_{false};

@@ -25,9 +25,9 @@ class Timer {
 inline bool operator<(const Timer& lhs, const Timer& rhs) {
   return lhs.Timeout() > rhs.Timeout();
 } 
-class TimeManager {
+class TimerManager {
   public:
-    TimeManager();
+    TimerManager();
     void AddTimer(const Timer& timer);
     bool Tick();
     unsigned long CurrentTick() const {return tick_;}
@@ -36,7 +36,7 @@ class TimeManager {
     std::priority_queue<Timer> timers_{};
 };
 
-extern TimeManager* time_manager;
+extern TimerManager* timer_manager;
 extern unsigned long lapic_timer_freq;
 const int kTimerFreq = 100;
 const int kTaskTimerPeriod = static_cast<int>(kTimerFreq * 0.02);

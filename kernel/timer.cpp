@@ -16,11 +16,11 @@ Timer::Timer(unsigned long timeout, int value, uint64_t task_id)
 
   }
 
-TimeManager::TimeManager(){
+TimerManager::TimerManager(){
     timers_.push(Timer{std::numeric_limits<unsigned long>::max(), 0, 0});
 }
 
-bool TimeManager::Tick() {
+bool TimerManager::Tick() {
   ++tick_;
 
   bool task_timer_timeout = false;
@@ -48,22 +48,22 @@ bool TimeManager::Tick() {
   return task_timer_timeout;
 }
 
-void TimeManager::AddTimer(const Timer& timer) {
+void TimerManager::AddTimer(const Timer& timer) {
   timers_.push(timer);
 }
 
-TimeManager* time_manager;
+TimerManager* timer_manager;
 unsigned long lapic_timer_freq;
 
 extern "C" void LAPICTimerOnInterrupt(const TaskContext& ctx_stack) {
-  const bool task_timer_timeout = time_manager->Tick();
+  const bool task_timer_timeout = timer_manager->Tick();
   NotifyEndOfInterrupt();
 
   if(task_timer_timeout) task_manager->SwitchTask(ctx_stack);
 }
 
 void InitializeLAPICTimer() {
-  time_manager = new TimeManager;
+  timer_manager = new TimerManager;
 
   divide_config = 0b1011;
   lvt_timer = 0b001 << 16;

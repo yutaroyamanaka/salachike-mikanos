@@ -125,7 +125,7 @@ namespace syscall {
 
   SYSCALL(GetCurrentTick) {
     return {
-      time_manager->CurrentTick(), kTimerFreq
+      timer_manager->CurrentTick(), kTimerFreq
     };
   }
 
@@ -290,11 +290,11 @@ namespace syscall {
 
     unsigned long timeout = arg3 * kTimerFreq / 1000;
     if(mode & 1) {
-      timeout += time_manager->CurrentTick();
+      timeout += timer_manager->CurrentTick();
     }
 
     __asm__("cli");
-    time_manager->AddTimer(Timer{timeout, -time_value, task_id});
+    timer_manager->AddTimer(Timer{timeout, -time_value, task_id});
     __asm__("sti");
     return { timeout * 1000 / kTimerFreq, 0 };
   }
