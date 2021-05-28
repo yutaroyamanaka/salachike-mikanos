@@ -163,7 +163,7 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig& frame_buffer_config_
 
   const int kTextboxCursorTimer = 1;
   const int kTimer05Sec = static_cast<int>(kTimerFreq * 0.5);
-  time_manager->AddTimer(Timer{kTimer05Sec, kTextboxCursorTimer, 1});
+  timer_manager->AddTimer(Timer{kTimer05Sec, kTextboxCursorTimer, 1});
   bool textbox_cursor_visible = false;
 
   InitializeSyscall();
@@ -183,7 +183,7 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig& frame_buffer_config_
 
   while (true) {
     __asm__("cli");
-    const auto tick = time_manager->CurrentTick();
+    const auto tick = timer_manager->CurrentTick();
     __asm__("sti");
 
     sprintf(str, "%010lu", tick);
@@ -208,7 +208,7 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig& frame_buffer_config_
       case Message::kTimerTimeout:
         if(msg->arg.timer.value == kTextboxCursorTimer) {
           __asm__("cli");
-          time_manager->AddTimer(
+          timer_manager->AddTimer(
               Timer{msg->arg.timer.timeout + kTimer05Sec, kTextboxCursorTimer, 1}
               );
           __asm__("sti");
