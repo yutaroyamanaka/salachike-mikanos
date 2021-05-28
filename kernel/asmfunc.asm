@@ -316,3 +316,17 @@ SyscallEntry: ; void SyscallEntry(void);
   pop rbx
 
   ret ; jump to the next line of CallApp
+
+global ExitApp 
+ExitApp: ; void ExitApp(uint64_t rsp, int32_t ret_val);
+  mov rsp, rdi
+  mov eax, esi
+
+  pop r15
+  pop r14
+  pop r13
+  pop r12
+  pop rbp
+  pop rbx
+
+  ret ; CallApp
