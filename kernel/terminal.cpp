@@ -464,10 +464,14 @@ void Terminal::ExecuteLine() {
       Print(s);
     }
   } else if(strcmp(command, "ls") == 0) {
-    if(first_arg[0] == '\0') {
+    if (first_arg[0] == '\0' && fat::current_path[0] == '/' && fat::current_path[1] == '\0') {
       ListAllEntries(this, fat::boot_volume_image->root_cluster);
     } else {
-      auto [dir, post_slash] = fat::FindFile(first_arg);
+      char abs_path[30];
+      fat::GetAbsolutePath(first_arg, abs_path);
+
+      auto [dir, post_slash] = fat::FindFile(abs_path);
+
       if(dir == nullptr) {
         Print("No such file or directory: ");
         Print(first_arg);
@@ -488,8 +492,10 @@ void Terminal::ExecuteLine() {
     }
   } else if (strcmp(command, "cat") == 0)  {
     char s[64];
+    char abs_path[30];
+    fat::GetAbsolutePath(first_arg, abs_path);
+    auto [file_entry, post_slash] = fat::FindFile(abs_path);
 
-    auto [file_entry, post_slash] = fat::FindFile(first_arg);
     if(!file_entry) { 
       sprintf(s, "no such file: %s\n", first_arg);
       Print(s);
@@ -546,7 +552,10 @@ void Terminal::ExecuteLine() {
       }
     }
   } else if(command[0] != 0) {
-    auto [file_entry, post_slash] = fat::FindFile(command);
+    char abs_path[30];
+    fat::GetAbsolutePath(command, abs_path);
+
+    auto [file_entry, post_slash] = fat::FindFile(abs_path);
     if(!file_entry) {
       Print("no such command: ");
       Print(command);
@@ -556,7 +565,7 @@ void Terminal::ExecuteLine() {
       fat::FormatName(*file_entry, name);
       Print(name);
       Print(" is not a directory\n");
-    } else if(auto err = ExecuteFile(*file_entry, command, first_arg)) {
+    } else if(auto err = ExecuteFile(*file_entry, abs_path, first_arg)) {
       Print("failed to exec file: ");
       Print(err.Name());
       Print("\n");

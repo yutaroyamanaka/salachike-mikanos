@@ -3,6 +3,7 @@
 #include <cstring>
 #include <cctype>
 #include <utility>
+#include "logger.hpp"
 
 namespace {
 std::pair<const char*, bool> NextPathElement(const char* path, char* path_elem) {
@@ -23,14 +24,15 @@ std::pair<const char*, bool> NextPathElement(const char* path, char* path_elem) 
 namespace fat {
   BPB* boot_volume_image;
   unsigned long bytes_per_cluster;
-  char current_path[30];
+  char current_path[30] = "/\0";
 
   void Initialize(void* volume_image) {
     boot_volume_image = reinterpret_cast<fat::BPB*>(volume_image);
     bytes_per_cluster =
       static_cast<unsigned long>(boot_volume_image->bytes_per_sector) *
       boot_volume_image->sectors_per_cluster;
-    current_path[0] = '/';
+    //current_path[0] = '/';
+    //current_path[1] = '\0';
   }
 
   uintptr_t GetClusterAddr(unsigned long cluster) {
@@ -115,6 +117,9 @@ namespace fat {
     } else {
       /* current_path = /,  */
       strcat(current_path, path);
+      const char* end_of_path = strchr(current_path, '\0');
+      const auto path_len = end_of_path - current_path;
+      if(current_path[path_len - 1] == '/') current_path[path_len - 1] = '\0';
     }
   }
 
@@ -164,6 +169,40 @@ namespace fat {
     ReadName(entry, dest, &ext[1]);
     if(ext[1]){
       strcat(dest, ext);
+    }
+  }
+
+  void GetAbsolutePath(const char* path, char* abs_path) {
+    /*
+     * abs_path should be '/' or '/apps', '/apps/stars'
+    */
+
+    if(path == nullptr) { /* abs_path -> current_path */
+      strcpy(abs_path, current_path);
+      return;
+    }
+
+    if(path[0] == '/') {
+      strcpy(abs_path, path);
+      return;
+    }
+
+    /* current_path is '/' or '/hoge' here */
+
+    const char* end_of_current_path = strchr(current_path, '\0');
+    const auto current_path_len = end_of_current_path - current_path;
+    strncpy(abs_path, current_path, current_path_len);
+
+    const char* end_of_relative_path = strchr(path, '\0');
+    const auto relative_path_len = end_of_relative_path - path;
+
+    if(current_path_len > 1) { /* /apps */
+      abs_path[current_path_len] = '/';
+      strncpy(abs_path + current_path_len + 1, path, relative_path_len);
+      abs_path[current_path_len + 1 + relative_path_len] = '\0';
+    } else { /* / */
+      strncpy(abs_path + current_path_len, path, relative_path_len);
+      abs_path[current_path_len + relative_path_len] = '\0';
     }
   }
 }

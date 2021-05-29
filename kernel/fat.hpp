@@ -87,4 +87,5 @@ namespace fat {
   size_t LoadFile(void* buf, size_t len, const DirectoryEntry& entry);
   void FormatName(const DirectoryEntry& entry, char* dest);
   void ChangeDirectory(const char* path);
+  void GetAbsolutePath(const char* path, char* abs_path);
 }
