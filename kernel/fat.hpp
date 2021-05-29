@@ -66,6 +66,8 @@ namespace fat {
   extern BPB* boot_volume_image;
   extern unsigned long bytes_per_cluster;
 
+  extern char current_path[30];
+
   void Initialize(void* volume_image);
 
   uintptr_t GetClusterAddr(unsigned long cluster);
@@ -84,4 +86,5 @@ namespace fat {
   bool NameIsEqual(const DirectoryEntry& entry, const char* name);
   size_t LoadFile(void* buf, size_t len, const DirectoryEntry& entry);
   void FormatName(const DirectoryEntry& entry, char* dest);
+  void ChangeDirectory(const char* path);
 }

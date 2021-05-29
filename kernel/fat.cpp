@@ -23,12 +23,14 @@ std::pair<const char*, bool> NextPathElement(const char* path, char* path_elem) 
 namespace fat {
   BPB* boot_volume_image;
   unsigned long bytes_per_cluster;
+  char current_path[30];
 
   void Initialize(void* volume_image) {
     boot_volume_image = reinterpret_cast<fat::BPB*>(volume_image);
     bytes_per_cluster =
       static_cast<unsigned long>(boot_volume_image->bytes_per_sector) *
       boot_volume_image->sectors_per_cluster;
+    current_path[0] = '/';
   }
 
   uintptr_t GetClusterAddr(unsigned long cluster) {
@@ -99,6 +101,21 @@ namespace fat {
     }
 
     return {nullptr, post_slash};
+  }
+
+  void ChangeDirectory(const char* path) {
+    if (path == nullptr) {
+      current_path[0] = '/';
+      current_path[1] = '\0';
+    } else if(path[0] == '/') {
+      const char* end_of_path = strchr(path, '\0');
+      const auto path_len = end_of_path - path;
+      strncpy(current_path, path, path_len);
+      if(current_path[path_len - 1] == '/') current_path[path_len - 1] = '\0';
+    } else {
+      /* current_path = /,  */
+      strcat(current_path, path);
+    }
   }
 
   bool NameIsEqual(const DirectoryEntry& entry, const char* name) {

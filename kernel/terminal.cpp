@@ -519,6 +519,32 @@ void Terminal::ExecuteLine() {
     }
   } else if(strcmp(command, "noterm") == 0) {
     task_manager->NewTask().InitContext(TaskTerminal, reinterpret_cast<int64_t>(first_arg)).Wakeup();
+  } else if(strcmp(command, "pwd") == 0) {
+    Print(fat::current_path);
+    Print("\n");
+  } else if(strcmp(command, "cd") == 0) {
+    if(first_arg == nullptr) {
+      fat::ChangeDirectory(first_arg);
+    } else {
+      auto [dir, post_slash] = fat::FindFile(first_arg);
+      if(dir == nullptr) {
+        Print("No such directory: ");
+        Print(first_arg);
+        Print("\n");
+      } else if(dir->attr == fat::Attribute::kDirectory) {
+        fat::ChangeDirectory(first_arg);
+      } else {
+        char name[13];
+        fat::FormatName(*dir, name);
+        if(post_slash) {
+          Print(name);
+          Print(" is not a directory\n");
+        } else {
+          Print(name);
+          Print("\n");
+        }
+      }
+    }
   } else if(command[0] != 0) {
     auto [file_entry, post_slash] = fat::FindFile(command);
     if(!file_entry) {
