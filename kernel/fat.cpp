@@ -3,6 +3,8 @@
 #include <cstring>
 #include <cctype>
 #include <utility>
+#include <stack>
+#include <string>
 #include "logger.hpp"
 
 namespace {
@@ -74,6 +76,10 @@ namespace fat {
   std::pair<DirectoryEntry*, bool> FindFile(const char* path, unsigned long directory_cluster) {
     if(path[0] == '/') {
       directory_cluster = boot_volume_image->root_cluster;
+
+      if(path[1] == '\0') {
+
+      }
       path++;
     } else if(directory_cluster == 0) {
       directory_cluster = boot_volume_image->root_cluster;
@@ -109,18 +115,10 @@ namespace fat {
     if (dst_path == nullptr) {
       current_path[0] = '/';
       current_path[1] = '\0';
-    } else if(dst_path[0] == '/') {
-      const char* end_of_path = strchr(current_path, '\0');
-      const auto path_len = end_of_path - current_path;
-      strncpy(current_path, dst_path, path_len);
-      if(current_path[path_len - 1] == '/') current_path[path_len - 1] = '\0';
-    } else {
-      /* current_path = /,  */
-      strcat(current_path, dst_path);
-      const char* end_of_path = strchr(current_path, '\0');
-      const auto path_len = end_of_path - current_path;
-      if(current_path[path_len - 1] == '/') current_path[path_len - 1] = '\0';
+      return;
     }
+
+    strcpy(current_path, dst_path);
   }
 
   bool NameIsEqual(const DirectoryEntry& entry, const char* name) {
@@ -172,6 +170,61 @@ namespace fat {
     }
   }
 
+  void SimplifyPath(const char* dst_path, char* abs_path) {
+    std::stack<std::string> st;
+    std::string dir;
+
+    const char* end_of_dst_path = strchr(dst_path, '\0');
+    const auto dst_path_len = end_of_dst_path - dst_path;
+
+    int abs_path_index = 0;
+    abs_path[abs_path_index++] = '/';
+
+    for(int i = 0; i < dst_path_len; i++) {
+      dir.clear();
+
+      while(dst_path[i] == '/') i++;
+
+      while(i < dst_path_len && dst_path[i] != '/') {
+        dir.push_back(dst_path[i]);
+        i++;
+      }
+
+      if(dir.compare("..") == 0) {
+        if(!st.empty()) {
+          st.pop();
+        }
+      } else if(dir.compare(".") == 0) {
+        continue;
+      } else if(dir.length() != 0) {
+        st.push(dir);
+      }
+    }
+
+    std::stack<std::string> st1;
+    while(!st.empty()) {
+      st1.push(st.top());
+      st.pop();
+    }
+
+    while(!st1.empty()) {
+      std::string tmp = st1.top();
+
+      if(st1.size() != 1) {
+        tmp += "/";
+      } 
+
+      for(int j = 0; j < tmp.length(); j++) {
+        abs_path[abs_path_index] = tmp[j];
+        abs_path_index++;
+      }
+
+      st1.pop();
+    }
+
+    abs_path[abs_path_index] = '\0';
+  }
+
   void GetAbsolutePath(char* current_path, const char* dst_path, char* abs_path) {
     /*
      * abs_path should be '/' or '/apps', '/apps/stars'
@@ -183,26 +236,27 @@ namespace fat {
     }
 
     if(dst_path[0] == '/') {
-      strcpy(abs_path, dst_path);
+      SimplifyPath(dst_path, abs_path);
       return;
     }
 
-    /* current_path is '/' or '/hoge' here */
+    char concated_path[30]; /* concat current_path and dst_path */
 
     const char* end_of_current_path = strchr(current_path, '\0');
     const auto current_path_len = end_of_current_path - current_path;
-    strncpy(abs_path, current_path, current_path_len);
+    strncpy(concated_path, current_path, current_path_len);
 
     const char* end_of_relative_path = strchr(dst_path, '\0');
     const auto relative_path_len = end_of_relative_path - dst_path;
 
     if(current_path_len > 1) { /* /apps */
-      abs_path[current_path_len] = '/';
-      strncpy(abs_path + current_path_len + 1, dst_path, relative_path_len);
-      abs_path[current_path_len + 1 + relative_path_len] = '\0';
+      concated_path[current_path_len] = '/';
+      strncpy(concated_path + current_path_len + 1, dst_path, relative_path_len);
+      concated_path[current_path_len + 1 + relative_path_len] = '\0';
     } else { /* / */
-      strncpy(abs_path + current_path_len, dst_path, relative_path_len);
-      abs_path[current_path_len + relative_path_len] = '\0';
+      strncpy(concated_path + current_path_len, dst_path, relative_path_len);
+      concated_path[current_path_len + relative_path_len] = '\0';
     }
+    SimplifyPath(concated_path, abs_path);
   }
 }

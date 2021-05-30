@@ -472,6 +472,10 @@ void Terminal::ExecuteLine() {
       char abs_path[30];
       fat::GetAbsolutePath(current_path_, first_arg, abs_path);
 
+      if(abs_path[0] == '/' && abs_path[1] == '\0') {
+        ListAllEntries(this, fat::boot_volume_image->root_cluster);
+        return;
+      }
       auto [dir, post_slash] = fat::FindFile(abs_path);
 
       if(dir == nullptr) {
@@ -534,13 +538,21 @@ void Terminal::ExecuteLine() {
     if(first_arg == nullptr) {
       fat::ChangeDirectory(current_path_, first_arg);
     } else {
-      auto [dir, post_slash] = fat::FindFile(first_arg);
+      char abs_path[30];
+      fat::GetAbsolutePath(current_path_, first_arg, abs_path);
+      
+      if(abs_path[0] == '/' && abs_path[1] == '\0') {
+        fat::ChangeDirectory(current_path_, nullptr);
+        return;
+      }
+
+      auto [dir, post_slash] = fat::FindFile(abs_path);
       if(dir == nullptr) {
         Print("No such directory: ");
         Print(first_arg);
         Print("\n");
       } else if(dir->attr == fat::Attribute::kDirectory) {
-        fat::ChangeDirectory(current_path_, first_arg);
+        fat::ChangeDirectory(current_path_, abs_path);
       } else {
         char name[13];
         fat::FormatName(*dir, name);
