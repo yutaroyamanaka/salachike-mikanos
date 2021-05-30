@@ -23,6 +23,7 @@ class Terminal {
     unsigned int layer_id_;
     uint64_t task_id_;
     bool show_window_;
+    char current_path_[30]; 
 
     Vector2D<int> cursor_{0, 0};
     bool cursor_visible_{false};

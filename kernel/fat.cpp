@@ -105,18 +105,18 @@ namespace fat {
     return {nullptr, post_slash};
   }
 
-  void ChangeDirectory(const char* path) {
-    if (path == nullptr) {
+  void ChangeDirectory(char* current_path, const char* dst_path) {
+    if (dst_path == nullptr) {
       current_path[0] = '/';
       current_path[1] = '\0';
-    } else if(path[0] == '/') {
-      const char* end_of_path = strchr(path, '\0');
-      const auto path_len = end_of_path - path;
-      strncpy(current_path, path, path_len);
+    } else if(dst_path[0] == '/') {
+      const char* end_of_path = strchr(current_path, '\0');
+      const auto path_len = end_of_path - current_path;
+      strncpy(current_path, dst_path, path_len);
       if(current_path[path_len - 1] == '/') current_path[path_len - 1] = '\0';
     } else {
       /* current_path = /,  */
-      strcat(current_path, path);
+      strcat(current_path, dst_path);
       const char* end_of_path = strchr(current_path, '\0');
       const auto path_len = end_of_path - current_path;
       if(current_path[path_len - 1] == '/') current_path[path_len - 1] = '\0';
@@ -172,18 +172,18 @@ namespace fat {
     }
   }
 
-  void GetAbsolutePath(const char* path, char* abs_path) {
+  void GetAbsolutePath(char* current_path, const char* dst_path, char* abs_path) {
     /*
      * abs_path should be '/' or '/apps', '/apps/stars'
     */
 
-    if(path == nullptr) { /* abs_path -> current_path */
+    if(dst_path == nullptr) { /* abs_path -> current_path */
       strcpy(abs_path, current_path);
       return;
     }
 
-    if(path[0] == '/') {
-      strcpy(abs_path, path);
+    if(dst_path[0] == '/') {
+      strcpy(abs_path, dst_path);
       return;
     }
 
@@ -193,15 +193,15 @@ namespace fat {
     const auto current_path_len = end_of_current_path - current_path;
     strncpy(abs_path, current_path, current_path_len);
 
-    const char* end_of_relative_path = strchr(path, '\0');
-    const auto relative_path_len = end_of_relative_path - path;
+    const char* end_of_relative_path = strchr(dst_path, '\0');
+    const auto relative_path_len = end_of_relative_path - dst_path;
 
     if(current_path_len > 1) { /* /apps */
       abs_path[current_path_len] = '/';
-      strncpy(abs_path + current_path_len + 1, path, relative_path_len);
+      strncpy(abs_path + current_path_len + 1, dst_path, relative_path_len);
       abs_path[current_path_len + 1 + relative_path_len] = '\0';
     } else { /* / */
-      strncpy(abs_path + current_path_len, path, relative_path_len);
+      strncpy(abs_path + current_path_len, dst_path, relative_path_len);
       abs_path[current_path_len + relative_path_len] = '\0';
     }
   }

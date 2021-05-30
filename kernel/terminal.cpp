@@ -297,6 +297,8 @@ Terminal::Terminal(uint64_t task_id, bool show_window) : task_id_{task_id}, show
     Print(">");
   }
   cmd_history_.resize(8);
+  current_path_[0] = '/';
+  current_path_[1] = '\0';
 }
 
 Rectangle<int> Terminal::BlinkCursor() {
@@ -464,11 +466,11 @@ void Terminal::ExecuteLine() {
       Print(s);
     }
   } else if(strcmp(command, "ls") == 0) {
-    if (first_arg[0] == '\0' && fat::current_path[0] == '/' && fat::current_path[1] == '\0') {
+    if (first_arg[0] == '\0' && current_path_[0] == '/' && current_path_[1] == '\0') {
       ListAllEntries(this, fat::boot_volume_image->root_cluster);
     } else {
       char abs_path[30];
-      fat::GetAbsolutePath(first_arg, abs_path);
+      fat::GetAbsolutePath(current_path_, first_arg, abs_path);
 
       auto [dir, post_slash] = fat::FindFile(abs_path);
 
@@ -493,7 +495,7 @@ void Terminal::ExecuteLine() {
   } else if (strcmp(command, "cat") == 0)  {
     char s[64];
     char abs_path[30];
-    fat::GetAbsolutePath(first_arg, abs_path);
+    fat::GetAbsolutePath(current_path_, first_arg, abs_path);
     auto [file_entry, post_slash] = fat::FindFile(abs_path);
 
     if(!file_entry) { 
@@ -526,11 +528,11 @@ void Terminal::ExecuteLine() {
   } else if(strcmp(command, "noterm") == 0) {
     task_manager->NewTask().InitContext(TaskTerminal, reinterpret_cast<int64_t>(first_arg)).Wakeup();
   } else if(strcmp(command, "pwd") == 0) {
-    Print(fat::current_path);
+    Print(current_path_);
     Print("\n");
   } else if(strcmp(command, "cd") == 0) {
     if(first_arg == nullptr) {
-      fat::ChangeDirectory(first_arg);
+      fat::ChangeDirectory(current_path_, first_arg);
     } else {
       auto [dir, post_slash] = fat::FindFile(first_arg);
       if(dir == nullptr) {
@@ -538,7 +540,7 @@ void Terminal::ExecuteLine() {
         Print(first_arg);
         Print("\n");
       } else if(dir->attr == fat::Attribute::kDirectory) {
-        fat::ChangeDirectory(first_arg);
+        fat::ChangeDirectory(current_path_, first_arg);
       } else {
         char name[13];
         fat::FormatName(*dir, name);
@@ -553,7 +555,7 @@ void Terminal::ExecuteLine() {
     }
   } else if(command[0] != 0) {
     char abs_path[30];
-    fat::GetAbsolutePath(command, abs_path);
+    fat::GetAbsolutePath(current_path_, command, abs_path);
 
     auto [file_entry, post_slash] = fat::FindFile(abs_path);
     if(!file_entry) {
