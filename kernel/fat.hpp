@@ -86,4 +86,15 @@ namespace fat {
   void FormatName(const DirectoryEntry& entry, char* dest);
   void ChangeDirectory(char* current_path, const char* dst_path);
   void GetAbsolutePath(char* current_path, const char* dst_path, char* abs_path);
+
+  class FileDescriptor {
+    public:
+      explicit FileDescriptor(DirectoryEntry& fat_entry);
+      size_t Read(void* buf, size_t len);
+    private:
+      DirectoryEntry& fat_entry_;
+      size_t rd_off_ = 0;
+      unsigned long rd_cluster_ = 0;
+      size_t rd_cluster_off_ = 0;
+  };
 }

@@ -556,13 +556,8 @@ void Terminal::ExecuteLine() {
       } else {
         char name[13];
         fat::FormatName(*dir, name);
-        if(post_slash) {
-          Print(name);
-          Print(" is not a directory\n");
-        } else {
-          Print(name);
-          Print("\n");
-        }
+        Print(name);
+        Print(" is not a directory\n");
       }
     }
   } else if(command[0] != 0) {
