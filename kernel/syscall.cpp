@@ -1,4 +1,4 @@
-#include "syscall.hpp"
+
 #include "app_event.hpp"
 #include <array>
 #include <cstdint>
