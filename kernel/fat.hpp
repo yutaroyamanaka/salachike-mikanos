@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstddef>
 #include "file.hpp"
+#include "error.hpp"
 
 namespace fat {
   struct BPB {
@@ -84,6 +85,16 @@ namespace fat {
   std::pair<DirectoryEntry*, bool> FindFile(const char* path, unsigned long directory_cluster = 0);
   bool NameIsEqual(const DirectoryEntry& entry, const char* name);
   size_t LoadFile(void* buf, size_t len, const DirectoryEntry& entry);
+
+  bool IsEndOfClusterchain(unsigned long cluster);
+  uint32_t* GetFAT();
+  unsigned long ExtendCluster(unsigned long eoc_cluter, size_t len);
+  DirectoryEntry* AllocateEntry(unsigned long dir_cluster);
+
+  void SetFileName(DirectoryEntry& entry, const char* name);
+
+  WithError<DirectoryEntry*> CreateFile(const char* path);
+
   void FormatName(const DirectoryEntry& entry, char* dest);
   void ChangeDirectory(char* current_path, const char* dst_path);
   void GetAbsolutePath(char* current_path, const char* dst_path, char* abs_path);
