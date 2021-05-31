@@ -6,6 +6,7 @@
 #include "window.hpp"
 #include "layer.hpp"
 #include "fat.hpp"
+#include "file.hpp"
 
 class Terminal {
   public:
@@ -41,6 +42,15 @@ class Terminal {
     std::deque<std::array<char, kLineMax>> cmd_history_{};
     int cmd_history_index_{-1};
     Rectangle<int> HistoryUpDown(int direction);
+};
+
+class TerminalFileDescriptor : public FileDescriptor {
+  public:
+    explicit TerminalFileDescriptor(Task& task, Terminal& term);
+    size_t Read(void* buf, size_t len) override;
+  private:
+    Task& task_;
+    Terminal& term_;
 };
 
 extern std::map<uint64_t, Terminal*>* terminals;
