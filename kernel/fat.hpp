@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include "file.hpp"
 
 namespace fat {
   struct BPB {
@@ -87,10 +88,10 @@ namespace fat {
   void ChangeDirectory(char* current_path, const char* dst_path);
   void GetAbsolutePath(char* current_path, const char* dst_path, char* abs_path);
 
-  class FileDescriptor {
+  class FileDescriptor : public ::FileDescriptor {
     public:
       explicit FileDescriptor(DirectoryEntry& fat_entry);
-      size_t Read(void* buf, size_t len);
+      size_t Read(void* buf, size_t len) override;
     private:
       DirectoryEntry& fat_entry_;
       size_t rd_off_ = 0;
