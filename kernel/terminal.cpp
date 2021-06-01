@@ -652,9 +652,11 @@ Error Terminal::ExecuteFile(const fat::DirectoryEntry& file_entry, char* command
     return err;
   }
 
-  task.Files().push_back(
-      std::make_unique<TerminalFileDescriptor>(task, *this)
-      );
+  for(int i = 0; i < 3; i++) { /* 0:stdin, 1:stdout, 2:stderr */
+    task.Files().push_back(
+        std::make_unique<TerminalFileDescriptor>(task, *this)
+        );
+  }
 
   auto entry_addr = elf_header->e_entry;
   int ret = CallApp(argc.value, argv, 3 << 3 | 3, entry_addr,
@@ -790,4 +792,9 @@ size_t TerminalFileDescriptor::Read(void* buf, size_t len) {
     term_.Print(bufc, 1);
     return 1;
   }
+}
+
+size_t TerminalFileDescriptor::Write(const void* buf, size_t len) {
+  term_.Print(reinterpret_cast<const char*>(buf), len);
+  return len;
 }
