@@ -34,6 +34,7 @@ struct SyscallResult SyscallReadEvent(struct AppEvent* events, size_t len);
 struct SyscallResult SyscallCreateTimer(unsigned int type, int timer_value, unsigned long timeout_ms);
 struct SyscallResult SyscallOpenFile(const char* path, int flags);
 struct SyscallResult SyscallReadFile(int fd, void* buf, size_t count);
+struct SyscallResult SyscallDemandPages(size_t num_pages, int flags);
 #ifdef __cplusplus
 }
 #endif

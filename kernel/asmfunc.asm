@@ -87,6 +87,11 @@ KernelMain:
     hlt
     jmp .fin
 
+global GetCR2
+GetCR2:
+  mov rax, cr2
+  ret
+
 global GetCR3
 GetCR3:
   mov rax, cr3
