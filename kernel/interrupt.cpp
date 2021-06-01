@@ -6,6 +6,7 @@
 #include "task.hpp"
 #include "font.hpp"
 #include "graphics.hpp"
+#include "paging.hpp"
 
 std::array<InterruptDescriptor, 256> idt;
 
@@ -45,22 +46,38 @@ namespace {
   void PrintFrame(InterruptFrame* frame, const char* exp_name) {
     WriteString(*screen_writer, {500, 16*0}, exp_name, {0, 0, 0});
     WriteString(*screen_writer, {500, 16*1}, "CS:RIP", {0, 0, 0});
-    PrintHex(frame->cs, 4, {500 + 8 * 7, 16 * 1});
-    PrintHex(frame->rip, 16, {500 + 8 * 12, 16 * 1});
-    WriteString(*screen_writer, {500, 16 * 2}, "RFLAGS", {0, 0, 0});
-    PrintHex(frame->rflags, 16, {500 + 8 * 7, 16 * 2});
-    WriteString(*screen_writer, {500, 16 * 3}, "SS:RSP", {0, 0, 0});
+    PrintHex(frame->cs, 4, {500 + 8*7, 16*1});
+    PrintHex(frame->rip, 16, {500 + 8*12, 16*1});
+    WriteString(*screen_writer, {500, 16*2}, "RFLAGS", {0, 0, 0});
+    PrintHex(frame->rflags, 16, {500 + 8*7, 16*2});
+    WriteString(*screen_writer, {500, 16*3}, "SS:RSP", {0, 0, 0});
     PrintHex(frame->ss, 4, {500 + 8*7, 16*3});
     PrintHex(frame->rsp, 16, {500 + 8*12, 16*3});
   }
 
-  void KillApp(InterruptFrame* frame) {
+  void KillApp(InterruptFrame *frame) {
     const auto cpl = frame->cs & 0x3;
     if(cpl != 3) return;
 
     auto& task = task_manager->CurrentTask();
     __asm__("sti");
     ExitApp(task.OSStackPointer(), 128 + SIGSEGV);
+  }
+
+  __attribute__((interrupt))
+  void IntHandlerPF(InterruptFrame* frame, uint64_t error_code) {
+    uint64_t cr2 = GetCR2();
+    if(auto err = HandlePageFault(error_code, cr2); !err) {
+      return;
+    }
+
+    KillApp(frame);
+    PrintFrame(frame, "#PF");
+    WriteString(*screen_writer, {500, 16*4}, "ERR", {0, 0, 0});
+    PrintHex(error_code, 16, {500 + 8*4, 16*4});
+    while(true) {
+      __asm__("hlt");
+    }
   }
 
   #define FaultHandlerWithError(fault_name) \
@@ -93,7 +110,7 @@ namespace {
   FaultHandlerWithError(NP)
   FaultHandlerWithError(SS)
   FaultHandlerWithError(GP)
-  FaultHandlerWithError(PF)
+  //FaultHandlerWithError(PF)
   FaultHandlerNoError(MF)
   FaultHandlerWithError(AC)
   FaultHandlerNoError(MC)
