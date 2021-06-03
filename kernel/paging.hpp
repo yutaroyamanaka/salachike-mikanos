@@ -72,6 +72,7 @@ void ResetCR3();
 
 WithError<PageMapEntry*> NewPageMap();
 Error FreePageMap(PageMapEntry* table);
-Error SetupPageMaps(LinearAddress4Level addr, size_t num_4kpages);
+Error SetupPageMaps(LinearAddress4Level addr, size_t num_4kpages, bool writable = true);
 Error CleanPageMaps(LinearAddress4Level addr);
+Error CopyPageMaps(PageMapEntry* dest, PageMapEntry* src, int part, int start);
 Error HandlePageFault(uint64_t error_code, uint64_t causal_addr);

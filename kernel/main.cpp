@@ -169,12 +169,12 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig& frame_buffer_config_
   InitializeSyscall();
   InitializeTask();
   Task& main_task = task_manager->CurrentTask();
-  terminals = new std::map<uint64_t, Terminal*>;
 
   usb::xhci::Initialize();
   InitializeKeyboard();
   InitializeMouse();
 
+  app_loads = new std::map<fat::DirectoryEntry*, AppLoadInfo>;
   task_manager->NewTask()
     .InitContext(TaskTerminal, 0)
     .Wakeup();
