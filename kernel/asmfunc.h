@@ -9,7 +9,9 @@ extern "C" {
   void LoadGDT(uint16_t limit, uint64_t offset);
   void SetCSSS(uint16_t cs, uint16_t ss);
   void SetDSAll(uint16_t value);
+  void SetCR0(uint64_t value);
   void SetCR3(uint64_t value);
+  uint64_t GetCR0();
   uint64_t GetCR2();
   uint64_t GetCR3();
   void SwitchContext(void* next_ctx, void* current_ctx);
@@ -20,4 +22,5 @@ extern "C" {
   void WriteMSR(uint32_t msr, uint64_t value);
   void SyscallEntry(void);
   void ExitApp(uint64_t rsp, int32_t ret_val);
+  void InvalidateTLB(uint64_t addr);
 }
