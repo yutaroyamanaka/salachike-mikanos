@@ -432,6 +432,21 @@ namespace fat {
     return total;
   }
 
+  size_t FileDescriptor::Load(void* buf, size_t len, size_t offset) {
+    FileDescriptor fd{fat_entry_};
+    fd.rd_off_ = offset;
+
+    unsigned long cluster = fat_entry_.FirstCluster();
+    while(offset >= bytes_per_cluster) {
+      offset -= bytes_per_cluster;
+      cluster = NextCluster(cluster);
+    }
+
+    fd.rd_cluster_ = cluster;
+    fd.rd_cluster_off_ = offset;
+    return fd.Read(buf, len);
+  }
+
   unsigned long AllocateClusterChain(size_t n) {
     uint32_t* fat = GetFAT();
     unsigned long first_cluster;
