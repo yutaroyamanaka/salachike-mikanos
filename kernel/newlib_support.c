@@ -48,6 +48,11 @@ ssize_t write(int fd, const void* buf, size_t count) {
   return -1;
 }
 
+int open(const char* path, int flags) {
+  errno = ENOENT;
+  return -1;
+}
+
 int fstat(int fd, struct stat* buf) {
   errno = EBADF;
   return -1;
