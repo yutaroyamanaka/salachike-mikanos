@@ -37,6 +37,7 @@ class Terminal {
 
     bool show_window_;
     std::array<std::shared_ptr<FileDescriptor>, 3> files_;
+    int last_exit_code_{0};
     char current_path_[30]; 
 
     Vector2D<int> cursor_{0, 0};
@@ -49,7 +50,7 @@ class Terminal {
     void Scroll1();
 
     void ExecuteLine();
-    Error ExecuteFile(fat::DirectoryEntry& file_entry, char* command, char* first_arg);
+    WithError<int> ExecuteFile(fat::DirectoryEntry& file_entry, char* command, char* first_arg);
     void Print(char32_t c);
 
     std::deque<std::array<char, kLineMax>> cmd_history_{};
