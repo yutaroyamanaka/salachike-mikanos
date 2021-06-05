@@ -68,7 +68,7 @@ class Error {
     "kInvalidFile",
     "kIsDirectory",
     "kNoSuchTask",
-    "kFreeTypeError"
+    "kFreeTypeError",
   };
   static_assert(Error::Code::kLastOfCode == code_names_.size());
 
