@@ -98,3 +98,4 @@ class PipeDescriptor: public FileDescriptor {
 };
 
 void TaskTerminal(uint64_t task_id, int64_t data);
+Error CloseLayer(unsigned int layer_id);

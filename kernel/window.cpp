@@ -73,6 +73,10 @@ void Window::Move(Vector2D<int> dst_pos, const Rectangle<int>& src) {
   shadow_buffer_.Move(dst_pos, src);
 }
 
+WindowRegion Window::GetWindowRegion(Vector2D<int> pos) {
+  return WindowRegion::kOther;
+}
+
 namespace {
   const int kCloseButtonWidth = 16;
   const int kCloseButtonHeight = 14;
@@ -168,6 +172,18 @@ void ToplevelWindow::Activate() {
 void ToplevelWindow::Deactivate() {
   Window::Deactivate();
   DrawWindowTitle(*Writer(), title_.c_str(), false);
+}
+
+WindowRegion ToplevelWindow::GetWindowRegion(Vector2D<int> pos) {
+  if(pos.x < 2 || Width() - 2 <= pos.x || pos.y < 2 || Height() - 2 <= pos.y) {
+    return WindowRegion::kBorder;
+  } else if(pos.y < kTopLeftMargin.y) {
+    if(Width() - 5 - kCloseButtonWidth <= pos.x && pos.x < Width() - 5 && 5 <= pos.y && pos.y < 5 + kCloseButtonHeight) {
+      return WindowRegion::KCloseButton;
+    }
+    return WindowRegion::kTitleBar;
+  }
+  return WindowRegion::kOther;
 }
 
 Vector2D<int> ToplevelWindow::InnerSize() const {

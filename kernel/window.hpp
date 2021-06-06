@@ -5,6 +5,12 @@
 #include "graphics.hpp"
 #include "frame_buffer.hpp"
 
+enum class WindowRegion {
+  kTitleBar,
+  KCloseButton,
+  kBorder,
+  kOther,
+};
 
 class Window {
   public:
@@ -41,6 +47,8 @@ class Window {
     
     virtual void Activate() {};
     virtual void Deactivate() {};
+
+    virtual WindowRegion GetWindowRegion(Vector2D<int> pos);
  private:
     int width_, height_;
     std::vector<std::vector<PixelColor>> data_{};
@@ -79,6 +87,7 @@ class ToplevelWindow: public Window {
 
     virtual void Activate() override;
     virtual void Deactivate() override;
+    virtual WindowRegion GetWindowRegion(Vector2D<int> pos) override;
 
     InnerAreaWriter* InnerWriter() {
       return &inner_writer_;
