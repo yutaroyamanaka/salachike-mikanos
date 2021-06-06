@@ -17,7 +17,7 @@ size_t PrintToFD(FileDescriptor& fd, const char* format, ...) {
 size_t ReadDelim(FileDescriptor& fd, char delim, char* buf, size_t len) {
   size_t i = 0;
   for(; i < len - 1; i++) {
-    if(fd.Read(&buf[1], 1) == 0) {
+    if(fd.Read(&buf[i], 1) == 0) {
       break;
     }
 
