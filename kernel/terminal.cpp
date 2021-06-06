@@ -416,7 +416,9 @@ void Terminal::ExecuteLine() {
 
   if(first_arg) {
     *first_arg = 0;
-    first_arg++;
+    do {
+      first_arg++;
+    } while (isspace(*first_arg));
   }
 
   auto original_stdout = files_[1];
@@ -523,23 +525,31 @@ void Terminal::ExecuteLine() {
   } else if (strcmp(command, "cat") == 0)  {
     char abs_path[30];
     fat::GetAbsolutePath(current_path_, first_arg, abs_path);
-    auto [file_entry, post_slash] = fat::FindFile(abs_path);
+    std::shared_ptr<FileDescriptor> fd;
 
-    if(!file_entry) { 
-      PrintToFD(*files_[2], "no such file: %s\n", first_arg);
-      exit_code = 1;
-    } else if(file_entry->attr != fat::Attribute::kDirectory && post_slash) {
-      char name[13];
-      fat::FormatName(*file_entry, name);
-      PrintToFD(*files_[2], " is not a directory\n", name);
-      exit_code = 1;
+    if(!first_arg || first_arg[0] == '\0') {
+      fd = files_[0];
     } else {
-      fat::FileDescriptor fd{*file_entry};
-      char u8buf[1024];
+      auto [file_entry, post_slash] = fat::FindFile(abs_path);
 
+      if(!file_entry) { 
+        PrintToFD(*files_[2], "no such file: %s\n", first_arg);
+        exit_code = 1;
+      } else if(file_entry->attr != fat::Attribute::kDirectory && post_slash) {
+        char name[13];
+        fat::FormatName(*file_entry, name);
+        PrintToFD(*files_[2], " is not a directory\n", name);
+        exit_code = 1;
+      } else {
+        fd = std::make_shared<fat::FileDescriptor>(*file_entry);
+      }
+    }
+
+    if(fd) {
+      char u8buf[1024];
       DrawCursor(false);
       while(true) {
-        if(ReadDelim(fd, '\n', u8buf, sizeof(u8buf)) == 0) {
+        if(ReadDelim(*fd, '\n', u8buf, sizeof(u8buf)) == 0) {
           break;
         }
         PrintToFD(*files_[1], "%s", u8buf);
